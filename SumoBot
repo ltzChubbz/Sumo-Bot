@@ -1,0 +1,348 @@
+#include <Servo.h>
+
+Servo LEFTWHEEL;
+Servo RIGHTWHEEL;
+
+const int    Buzzer = 9;
+const int    Switch  = 0;
+const int    ServoL  = 5;
+const int    ServoR  = 4;
+const int    SensorL = 6; 
+const int    SensorR = 7;
+const int    LineFL  = 11;
+const int    LineFR  = 12;
+const int    LineBL  = 2;
+const int    LineBR  = 10;
+        
+int RF = 65;
+int RR = 117;
+int RS = 89;
+
+int LF = 180;
+int LR = 0;
+int LS = 89;
+
+int lastSeen = 0;
+
+int ledState = HIGH;         // the current state of the output pin
+int buttonState;             // the current reading from the input pin
+int lastButtonState = LOW;   // the previous reading from the input pin
+int battleMode;
+
+unsigned long Currentmillis = 0;
+const long Interval = 800; 
+
+unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
+unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
+
+void setup() {
+  Serial.begin(9600);
+  LEFTWHEEL.attach(ServoL);
+  RIGHTWHEEL.attach(ServoR);
+  pinMode(Switch, INPUT);
+  pinMode(Buzzer, OUTPUT);
+  pinMode(SensorL, INPUT_PULLUP);
+  pinMode(SensorR, INPUT_PULLUP);
+  pinMode(LineFL, INPUT);
+  pinMode(LineFR, INPUT);
+  pinMode(LineBL, INPUT);
+  pinMode(LineBR, INPUT);
+  RIGHTWHEEL.write(RS);
+  LEFTWHEEL.write(LS);
+
+}
+
+void loop() {
+ 
+  if (digitalRead(Switch) != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (digitalRead(Switch) != buttonState) {
+      buttonState = digitalRead(Switch);
+      if (buttonState == LOW) {
+        battleMode++;
+        if (battleMode == 1){
+        tone(Buzzer, 3500, 300);
+        Currentmillis = millis();
+        RIGHTWHEEL.write(RS);
+        LEFTWHEEL.write(LS);
+        AttackCD();
+        }
+        if (battleMode == 2){
+        tone(Buzzer, 1000, 100);
+        Currentmillis = millis();
+        RIGHTWHEEL.write(RS);
+        LEFTWHEEL.write(LS);
+        DefendCD();
+        }
+        if (battleMode == 3){
+        tone(Buzzer, 2000, 200);
+        tone(Buzzer, 2500, 200);
+        Currentmillis = millis();
+        RIGHTWHEEL.write(RS);
+        LEFTWHEEL.write(LS);
+        SumoCD();
+        }
+        else if (battleMode > 3){
+          battleMode = 0;
+        }
+      }
+    }
+  }
+  lastButtonState = digitalRead(Switch);
+
+
+  if (battleMode == 1){
+        AttackCD();}
+  if (battleMode == 2){
+        DefendCD();}
+  if (battleMode == 3){
+        SumoCD();}
+  else if (battleMode == 0){
+        Serial.println("IDLE!");}
+
+}
+
+ 
+void AttackCD(){
+  if (millis() < (Currentmillis + 1000)){
+  Serial.println("ATTACKING IN: 5s!");
+  }
+  if ((millis() < (Currentmillis + 2000)) && (millis() > (Currentmillis + 1000))){
+  Serial.println("ATTACKING IN: 4s!");
+  }
+  if ((millis() < (Currentmillis + 3000)) && (millis() > (Currentmillis + 2000))){
+  Serial.println("ATTACKING IN: 3s!");
+  }
+  if ((millis() < (Currentmillis + 4000)) && (millis() > (Currentmillis + 3000))){
+  Serial.println("ATTACKING IN: 2s!");
+  }
+  if ((millis() < (Currentmillis + 5000)) && (millis() > (Currentmillis + 4000))){
+  Serial.println("ATTACKING IN: 1s!");
+  }
+  if (millis() > (Currentmillis + 5000)){
+  Serial.println("ATTACKING NOW!");
+  Attack();
+  }
+}
+void DefendCD(){
+  if (millis() < (Currentmillis + 1000)){
+  Serial.println("DEFENDING IN: 5s!");
+  }
+  if ((millis() < (Currentmillis + 2000)) && (millis() > (Currentmillis + 1000))){
+  Serial.println("DEFENDING IN: 4s!");
+  }
+  if ((millis() < (Currentmillis + 3000)) && (millis() > (Currentmillis + 2000))){
+  Serial.println("DEFENDING IN: 3s!");
+  }
+  if ((millis() < (Currentmillis + 4000)) && (millis() > (Currentmillis + 3000))){
+  Serial.println("DEFENDING IN: 2s!");
+  }
+  if ((millis() < (Currentmillis + 5000)) && (millis() > (Currentmillis + 4000))){
+  Serial.println("DEFENDING IN: 1s!");
+  }
+  if (millis() > (Currentmillis + 5000)){
+  Serial.println("DEFENDING NOW!");
+  Defend();
+  }
+}
+void SumoCD(){
+  if (millis() < (Currentmillis + 1000)){
+  Serial.println("SUMO IN: 5s!");
+  }
+  if ((millis() < (Currentmillis + 2000)) && (millis() > (Currentmillis + 1000))){
+  Serial.println("SUMO IN: 4s!");
+  }
+  if ((millis() < (Currentmillis + 3000)) && (millis() > (Currentmillis + 2000))){
+  Serial.println("SUMO IN: 3s!");
+  }
+  if ((millis() < (Currentmillis + 4000)) && (millis() > (Currentmillis + 3000))){
+  Serial.println("SUMO IN: 2s!");
+  }
+  if ((millis() < (Currentmillis + 5000)) && (millis() > (Currentmillis + 4000))){
+  Serial.println("SUMO IN: 1s!");
+  }
+  if (millis() > (Currentmillis + 5000)){
+  Serial.println("SUMO NOW!");
+  Sumo();
+  }
+}
+
+//====================================================================================//
+//=====================================ATTACK=========================================//
+//====================================================================================//
+void Attack(){
+  if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == LOW)){ 
+     if ((digitalRead(SensorL) == HIGH) && (digitalRead(SensorR) == HIGH)){
+        if (lastSeen == 0){
+          RIGHTWHEEL.write(RR);
+          LEFTWHEEL.write(LF);
+        }
+       else if (lastSeen == 1){
+          RIGHTWHEEL.write(RS);
+          LEFTWHEEL.write(LF);
+        }
+        else{
+          RIGHTWHEEL.write(RF);
+          LEFTWHEEL.write(LS);
+          }
+     }
+     else if ((digitalRead(SensorL) == LOW) && (digitalRead(SensorR) == HIGH)){
+      lastSeen = 2;
+      RIGHTWHEEL.write(RF);
+      LEFTWHEEL.write(LF);
+     }
+     else if ((digitalRead(SensorL) == HIGH) && (digitalRead(SensorR) == LOW)){
+      lastSeen = 1;
+      RIGHTWHEEL.write(RS);
+      LEFTWHEEL.write(LF);
+     }
+     else if ((digitalRead(SensorL) == LOW) && (digitalRead(SensorR) == LOW)){
+      RIGHTWHEEL.write(RF);
+      LEFTWHEEL.write(LF);
+     }
+  }
+  else {
+    if (((digitalRead(LineBR) == HIGH) || (digitalRead(LineBL) == HIGH)) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == LOW)){ 
+        RIGHTWHEEL.write(RF);
+        LEFTWHEEL.write(LF);
+        delay(Interval);
+    }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == HIGH)){ 
+        RIGHTWHEEL.write(RR);
+        LEFTWHEEL.write(LF);
+        delay(Interval);
+      }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == HIGH) && (digitalRead(LineFL) == LOW)){ 
+        RIGHTWHEEL.write(RF);
+        LEFTWHEEL.write(LR);
+        delay(Interval);
+    }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && ((digitalRead(LineFR) == HIGH) && (digitalRead(LineFL) == HIGH))){ 
+        RIGHTWHEEL.write(RR);
+        LEFTWHEEL.write(LR);
+        delay(Interval);
+    }
+  }
+}
+
+//====================================================================================//
+//======================================DEFEND========================================//
+//====================================================================================//
+void Defend(){
+  if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == LOW)){ 
+     if ((digitalRead(SensorL) == LOW) && (digitalRead(SensorR) == LOW)){
+        /*if (lastSeen == 0){
+          RIGHTWHEEL.write(RR);
+          LEFTWHEEL.write(LF);
+        }
+       else if (lastSeen == 1){
+          RIGHTWHEEL.write(RS);
+          LEFTWHEEL.write(LF);
+        }
+        else{
+          RIGHTWHEEL.write(RF);
+          LEFTWHEEL.write(LS);
+          }*/
+          RIGHTWHEEL.write(RR);
+          LEFTWHEEL.write(LR);
+     }
+     else if ((digitalRead(SensorL) == HIGH) && (digitalRead(SensorR) == LOW)){
+      lastSeen = 2;
+      RIGHTWHEEL.write(RR);
+      LEFTWHEEL.write(LR);
+     }
+     else if ((digitalRead(SensorL) == LOW) && (digitalRead(SensorR) == HIGH)){
+      lastSeen = 1;
+      RIGHTWHEEL.write(RR);
+      LEFTWHEEL.write(LR);
+     }
+     else if ((digitalRead(SensorL) == HIGH) && (digitalRead(SensorR) == HIGH)){
+      RIGHTWHEEL.write(RF);
+      LEFTWHEEL.write(LF);
+     }
+  }
+  else {
+    if (((digitalRead(LineBR) == HIGH) || (digitalRead(LineBL) == HIGH)) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == LOW)){ 
+        RIGHTWHEEL.write(RF);
+        LEFTWHEEL.write(LF);
+        delay(Interval);
+    }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == HIGH)){ 
+        RIGHTWHEEL.write(RR);
+        LEFTWHEEL.write(LF);
+        delay(Interval);
+      }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == HIGH) && (digitalRead(LineFL) == LOW)){ 
+        RIGHTWHEEL.write(RF);
+        LEFTWHEEL.write(LR);
+        delay(Interval);
+    }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && ((digitalRead(LineFR) == HIGH) && (digitalRead(LineFL) == HIGH))){ 
+        RIGHTWHEEL.write(RR);
+        LEFTWHEEL.write(LR);
+        delay(Interval);
+    }
+  }
+}
+
+//====================================================================================//
+//=======================================SUMO=========================================//
+//====================================================================================//
+void Sumo(){
+  if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == LOW)){ 
+     if ((digitalRead(SensorL) == HIGH) && (digitalRead(SensorR) == HIGH)){
+        if (lastSeen == 0){
+          RIGHTWHEEL.write(RR);
+          LEFTWHEEL.write(LF);
+        }
+       else if (lastSeen == 1){
+          RIGHTWHEEL.write(RS);
+          LEFTWHEEL.write(LF);
+        }
+        else{
+          RIGHTWHEEL.write(RF);
+          LEFTWHEEL.write(LS);
+          }
+     }
+     else if ((digitalRead(SensorL) == LOW) && (digitalRead(SensorR) == HIGH)){
+      lastSeen = 2;
+      RIGHTWHEEL.write(RF);
+      LEFTWHEEL.write(LS);
+     }
+     else if ((digitalRead(SensorL) == HIGH) && (digitalRead(SensorR) == LOW)){
+      lastSeen = 1;
+      RIGHTWHEEL.write(RS);
+      LEFTWHEEL.write(LF);
+     }
+     else if ((digitalRead(SensorL) == LOW) && (digitalRead(SensorR) == LOW)){
+      RIGHTWHEEL.write(RF);
+      LEFTWHEEL.write(LF);
+     }
+  }
+  else {
+    if (((digitalRead(LineBR) == HIGH) || (digitalRead(LineBL) == HIGH)) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == LOW)){ 
+        RIGHTWHEEL.write(RF);
+        LEFTWHEEL.write(LF);
+        delay(Interval);
+    }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == LOW) && (digitalRead(LineFL) == HIGH)){ 
+        RIGHTWHEEL.write(RR);
+        LEFTWHEEL.write(LF);
+        delay(Interval);
+      }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && (digitalRead(LineFR) == HIGH) && (digitalRead(LineFL) == LOW)){ 
+        RIGHTWHEEL.write(RF);
+        LEFTWHEEL.write(LR);
+        delay(Interval);
+    }
+    if ((digitalRead(LineBR) == LOW) && (digitalRead(LineBL) == LOW) && ((digitalRead(LineFR) == HIGH) && (digitalRead(LineFL) == HIGH))){ 
+        RIGHTWHEEL.write(RR);
+        LEFTWHEEL.write(LR);
+        delay(Interval);
+    }
+  }
+}
+
